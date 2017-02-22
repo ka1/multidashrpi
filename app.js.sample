@@ -1,0 +1,29 @@
+//                                                                   TO FIND OUT ADRESSES, RUN docker run -it --network="host" kaii/multidashrpi /bin/bash
+//                                                                   ONCE IN THE CONTAINER, RUN findbutton AND PRESS A DASH BUTTON TO NOTE THE MAC ADRESS
+
+var dash_button = require('node-dash-button');
+var mqtt = require('mqtt');
+var mqttclient  = mqtt.connect('mqtt://192.168.1.1') // <----------- ENTER YOUR MQTT SERVER HERE
+
+var dashes = {
+    "00:00:00:00:00:01": 'sample/channel1',          // <----------- ENTER THE MAC ADRESSES OF YOUR DASH BUTTONS HERE
+    "00:00:00:00:00:02": 'sample/channel2',
+    "00:00:00:00:00:03": 'sample/channel3'
+};
+
+//collect in array
+var dasharray = Array();
+for (var key in dashes){
+    if (!dashes.hasOwnProperty(key)) continue;
+    dasharray.push(key);
+}
+
+console.log("Started multi dash button listener");
+var dash = dash_button(dasharray, null, null, "all");
+dash.on("detected", function (dash_id){
+  console.log("Button found with mac address :", dash_id);
+  if (dashes[dash_id] != null){
+      mqttclient.publish(dashes[dash_id], 'active');
+  }
+
+});
